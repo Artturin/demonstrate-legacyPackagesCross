@@ -5,15 +5,20 @@
   };
 
   outputs = { self, nixpkgs, utils }:
-    utils.lib.eachDefaultSystem (system:
-      let
-        helloOverlay = _: super: {
-          hello1 = super.hello;
-        };
-        pkgs = import nixpkgs { inherit system; overlays = [ helloOverlay ]; };
-      in
-      {
-        legacyPackages = pkgs;
-      }
-    );
+    let
+      helloOverlay = final: prev: {
+        hello1 = prev.hello;
+      };
+    in
+    utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = import nixpkgs { inherit system; overlays = [ helloOverlay ]; };
+        in
+        {
+          legacyPackages = pkgs;
+        }
+      ) //
+    # overlays have to be outside of eachSystem block
+    { overlays.default = helloOverlay; };
 }
